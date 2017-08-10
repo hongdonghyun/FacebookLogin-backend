@@ -17,8 +17,11 @@ class FacebookLoginAPIView(APIView):
         if not token:
             raise APIException('token require')
 
-        debug_result = self.debug_token(token)
-        return Response(debug_result)
+        self.debug_token(token)
+        user_info = self.get_user_info(
+            token=token,
+        )
+        return Response(user_info)
 
     def debug_token(self, token):
         url_debug_token = 'https://graph.facebook.com/debug_token'
@@ -32,3 +35,21 @@ class FacebookLoginAPIView(APIView):
             raise APIException('token invalid')
         else:
             return result
+
+    def get_user_info(self, token):
+        url_user_info = 'https://graph.facebook.com/v2.9/me'
+        url_user_info_params = {
+            'access_token': token,
+            'fields': ','.join([
+                'id',
+                'name',
+                'email',
+                'first_name',
+                'last_name',
+                'picture.type(large)',
+                'gender',
+            ])
+        }
+        response = requests.get(url_user_info, params=url_user_info_params)
+        result = response.json()
+        return result
